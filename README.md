@@ -1,264 +1,276 @@
-<p align="center">
-  <picture>
-    <img width="1143" height="359" alt="modedock-logo-light" src="https://github.com/user-attachments/assets/ea0eb3a5-4a7e-4e35-80a2-e0fb76c84454" />
-  </picture>
-</p>
+<picture>
+  <img width="1143" height="359" alt="modedock-logo-light" src="https://github.com/user-attachments/assets/ea0eb3a5-4a7e-4e35-80a2-e0fb76c84454" />
+</picture>
 
 <h1 align="center">ModeDOCK</h1>
 
 <p align="center">
-  A lightweight, modular Windows CLI for managing DLL and ZIP game mods.
+  A terminal application for installing and managing local game mods and application plugins.
 </p>
 
 <p align="center">
-  <a href="#-installation">Installation</a> ·
-  <a href="#-quick-start">Quick start</a> ·
-  <a href="#-commands">Commands</a> ·
-  <a href="#-development">Development</a> ·
-  <a href="#-security">Security</a>
+  <a href="https://nodejs.org/">
+    <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-339933?logo=nodedotjs&logoColor=white">
+  </a>
+  <a href="https://www.npmjs.com/">
+    <img alt="npm" src="https://img.shields.io/badge/npm-CLI-CB3837?logo=npm&logoColor=white">
+  </a>
+  <a href="https://www.typescriptlang.org/">
+    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Ready-3178C6?logo=typescript&logoColor=white">
+  </a>
+  <a href="#requirements">
+    <img alt="Windows, macOS and Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-5C6BC0">
+  </a>
+  <a href="#license">
+    <img alt="License: UNLICENSED" src="https://img.shields.io/badge/license-UNLICENSED-lightgrey">
+  </a>
 </p>
 
 <p align="center">
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20x64-0078D4">
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-18%2B-339933">
-  <img alt=".NET" src="https://img.shields.io/badge/.NET-10-512BD4">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
-  <img alt="Status" src="https://img.shields.io/badge/status-active%20development-orange">
+  <a href="#features">Features</a> •
+  <a href="#requirements">Requirements</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#quick-start">Quick start</a> •
+  <a href="#settings">Settings</a> •
+  <a href="#safety-model">Safety</a> •
+  <a href="#development">Development</a>
 </p>
 
 ---
 
+## Overview
+
+ModeDOCK provides an interactive keyboard interface for everyday use and a stable command-line interface for npm scripts and automation.
+
 > [!IMPORTANT]
-> ModeDOCK is a **file manager for game modifications**. It is not a DLL injector, mod loader, compatibility layer, or mod downloader. DLL mods still require the loader and game version specified by their authors, such as BepInEx or MelonLoader.
+> ModeDOCK does **not** download mods, inject code into processes, install a mod loader, bypass DRM, or bypass anti-cheat software. It only manages files that the user explicitly selects.
 
-> [!WARNING]
-> Always back up important game files and install mods only from sources you trust. A third-party DLL can execute arbitrary code after a compatible game loader loads it.
+---
 
-> [!CAUTION]
-> SHA-256 checks can detect whether managed files were changed. They cannot prove that a mod is safe, authentic, or compatible with your game.
+## Features
 
-## 📌 About
+- Create reusable profiles for games and desktop applications.
+- Detect some Steam, Epic, and standard installations, or use any manually configured path.
+- Install a local file, folder, or ZIP archive.
+- Preview every destination before writing files.
+- Route files to the target's root, `Mods`, `Plugins`, or `Config` directory.
+- Enable, disable, reinstall, and remove managed items.
+- Back up files before replacement and restore originals on removal.
+- Create named snapshots and recover interrupted installations.
+- Verify managed files with SHA-256 hashes and detect ownership conflicts.
+- Produce machine-readable output with `--json` and safe previews with `--dry-run`.
+- Use English or Russian in the interactive interface.
+- Choose a cyan, monochrome, or amber interface theme.
 
-ModeDOCK is a local Windows x64 command-line manager for `.dll` and `.zip` game mods. It stores reusable game profiles, installs files into controlled relative paths, tracks every managed file, creates backups, and supports safe disable, enable, and uninstall operations.
+The interactive interface and direct commands call the same core services. Changing the interface language does not change command names, so existing scripts continue to work.
 
-ModeDOCK never edits the contents of an archive or DLL, injects code, downloads mods, or decides whether a mod is compatible with a particular game.
+---
 
-## ✨ Features
+## Requirements
 
-- Reusable game profiles with a display name, game directory, executable, and default mod target.
-- Installation of a single `.dll` file or the contents of a `.zip` archive.
-- JSON manifests containing every installed file and its SHA-256 digest.
-- Automatic backups before existing files are replaced.
-- Safe mod disabling by moving managed files outside the game and restoring originals.
-- Re-enabling only when destination paths remain safe.
-- Clean uninstall with restoration of original files.
-- Detection of missing or modified managed files.
-- Protection against absolute paths, parent-path traversal, unsafe ZIP entries, and ownership conflicts.
-- Launching a configured game directly from the terminal.
-
-## 📦 Installation
+| Component | Requirement |
+| --- | --- |
+| [Node.js](https://nodejs.org/) | Version 20 or newer |
+| [npm](https://www.npmjs.com/) | Required |
+| Operating system | Windows, macOS, or Linux |
 
 > [!NOTE]
-> The npm command below becomes available after the package is published under the `moddock` name. The README assumes that the project, package metadata, executable shim, namespaces, and commands have all been renamed from ModForge to ModeDOCK.
+> Automatic game detection depends on the platform and launcher. Manual target profiles work everywhere Node.js is supported.
 
-Install ModeDOCK globally:
+---
 
-```powershell
-npm install -g moddock
+## Installation
+
+### Run from source
+
+```bash
+git clone <repository-url>
+cd ModeDOCK
+npm install
+npm run verify
+npm run dev
 ```
 
-Verify the installation:
+`npm run dev` builds ModeDOCK and opens the interactive interface.
 
-```powershell
+### Test as a global command
+
+Use `npm pack` to test the CLI globally without publishing it:
+
+```bash
+npm pack
+npm install -g ./moddock-2.0.0.tgz
 moddock --version
-moddock --help
+moddock
 ```
 
-The npm package installs the `moddock` command. The native .NET CLI is self-contained, so end users need Node.js/npm but do not need to install the .NET runtime separately.
+### Install from npm
 
-**Current platform support:** Windows x64.
+After the package is published to npm, installation will be:
 
-### Install the current checkout for testing
+```bash
+npm install -g moddock
+moddock
+```
 
-```powershell
-npm run build
-npm pack --ignore-scripts --pack-destination dist
-npm install -g .
+---
+
+## Quick start
+
+Start the interactive interface:
+
+```bash
+moddock
+```
+
+Use <kbd>↑</kbd>/<kbd>↓</kbd> to move, <kbd>Enter</kbd> to select, and <kbd>Esc</kbd> to go back.
+
+1. Open **Games and applications**.
+2. Create or select a game profile.
+3. Choose **Install a mod or plugin**.
+4. Review the planned destination paths.
+5. Confirm the installation.
+
+ModeDOCK shows the complete file plan before applying changes.
+
+### Direct commands
+
+The same workflow is available through the CLI:
+
+```bash
+moddock target add --name "Example Game" --root "C:\Games\Example" --exe "Example.exe"
+moddock install ./plugin.dll --dry-run
+moddock install ./plugin.dll
+moddock list
+moddock disable plugin
+moddock enable plugin
+moddock remove plugin
 moddock doctor
 ```
 
-During development, `npm install -g .` creates a junction to the current checkout rather than a fully standalone installation.
+Run `moddock --help` for the full command list or read [`COMMANDS.md`](COMMANDS.md).
 
-### Uninstall
+---
 
-```powershell
-npm uninstall -g moddock
+## Settings
+
+Open **Settings** in the interactive interface to change:
+
+- interface language;
+- color theme;
+- logo style;
+- automatic backups;
+- removal confirmations;
+- target detection.
+
+Visual changes apply immediately. English is the default language.
+
+Settings can also be changed from a shell:
+
+```bash
+moddock config list
+moddock config set language ru
+moddock config set theme amber
+moddock config set logoStyle compact
+moddock config set automaticDetection false
+moddock config reset --force
 ```
 
-## 🚀 Quick start
+### Supported values
 
-### 1. Register a game profile
+| Setting | Values |
+| --- | --- |
+| `language` | `en`, `ru` |
+| `theme` | `default`, `mono`, `amber` |
+| `logoStyle` | `full`, `compact` |
+| `logLevel` | `error`, `warn`, `info`, `debug` |
 
-```powershell
-moddock profile add `
-  --name "Cuphead" `
-  --game-dir "C:\Games\Cuphead" `
-  --exe "Cuphead.exe" `
-  --target "BepInEx/plugins"
+---
+
+## Safety model
+
+ModeDOCK:
+
+- validates target paths;
+- blocks ZIP path traversal and nested links;
+- checks size limits and file ownership;
+- creates transaction journals;
+- rolls back failed multi-file installations;
+- requires confirmation and a backup before replacing unmanaged files.
+
+### Useful safety commands
+
+```bash
+moddock install ./mod.zip --dry-run
+moddock doctor
+moddock backup create --name "Before update"
+moddock backup recover
 ```
 
-The executable must exist inside the selected game directory.
-
-### 2. Install and inspect a mod
-
-```powershell
-moddock mod install "C:\Downloads\ExampleMod.zip" --profile "Cuphead"
-moddock mod list --profile "Cuphead"
-moddock doctor --profile "Cuphead"
-```
-
-### 3. Disable, enable, or uninstall it
-
-```powershell
-moddock mod disable "ExampleMod" --profile "Cuphead"
-moddock mod enable "ExampleMod" --profile "Cuphead"
-moddock mod uninstall "ExampleMod" --profile "Cuphead"
-```
-
-A mod may be selected by its name, full ID, or an unambiguous ID prefix. When only one profile exists, the `--profile` option may be omitted.
-
-## 🛠 Commands
-
-```text
-moddock --help
-moddock --version
-moddock doctor [--profile <name>]
-moddock paths
-
-moddock profile add [options]
-moddock profile list
-moddock profile show <profile>
-moddock profile remove <profile>
-
-moddock mod install <file> [--profile <name>]
-moddock mod list [--profile <name>]
-moddock mod disable <mod> [--profile <name>]
-moddock mod enable <mod> [--profile <name>]
-moddock mod uninstall <mod> [--profile <name>]
-```
-
-See [`COMMANDS.md`](COMMANDS.md) for the complete command reference, options, aliases, output modes, and exit codes.
-
-## 💾 Storage
-
-ModeDOCK stores its local state in a per-user application directory. After the internal rename is completed, the intended location is:
-
-```text
-%LOCALAPPDATA%\ModeDOCK\
-├── profiles.json
-├── manifests/<profile-id>/<mod-id>.json
-├── backups/<profile-id>/<mod-id>/...
-└── disabled/<profile-id>/<mod-id>/...
-```
-
-Use the following command to print the exact active paths:
-
-```powershell
-moddock paths
-```
-
-For isolated automation or tests, use `MODDOCK_DATA_DIR` or pass `--data-dir <path>` after the variable and option names have been implemented in the renamed codebase.
+### Important risks and limitations
 
 > [!WARNING]
-> Do not manually delete backup, disabled, or manifest files while mods are installed. They are required for safe restoration and lifecycle tracking.
+> A mod or plugin is executable third-party content. ModeDOCK does not audit it for malware, privacy problems, or destructive behavior. Only install files you trust.
 
-## 🧱 Project structure
+- ModeDOCK cannot guarantee compatibility with a game version, mod loader, operating system, or another mod.
+- Mods may violate a game's terms or trigger anti-cheat systems. Check the game's rules before using mods, especially in multiplayer.
+- A wrong target profile or destination can place files in the wrong directory. Always review the `--dry-run` result or interactive plan.
+- `--force` approves destructive operations. Do not use it blindly.
+- `--no-backup` is accepted only when no existing file would be overwritten.
+- Named snapshots cover managed files, not the entire game installation.
+- External changes to managed files or backups produce an integrity error instead of silent deletion. Run `moddock doctor` before forcing recovery.
+- Detection is best-effort and may miss portable, custom, or launcher-specific installations.
 
-```text
-ModeDOCK.Core/             Platform-neutral models, storage, validation, and mod engine
-ModeDOCK.Cli/              Dependency-free native CLI and command modules
-ModeDOCK.Core.Tests/       Core lifecycle and safety tests
-bin/moddock.js             Minimal npm executable shim
-scripts/                   Release build and packaged-CLI tests
-docs/                      Architecture and extension notes
+---
+
+## Data storage
+
+ModeDOCK keeps configuration, profiles, manifests, backups, disabled payloads, logs, and recovery journals outside the npm package:
+
+| Platform | Data directory |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\ModeDOCK` |
+| macOS | `~/Library/Application Support/ModeDOCK` |
+| Linux | `$XDG_DATA_HOME/moddock` or `~/.local/share/moddock` |
+
+Show the actual paths used by the current installation:
+
+```bash
+moddock paths
 ```
 
-The dependency direction is one-way:
+Use `MODDOCK_DATA_DIR`, `--data-dir`, or `--config` when isolated state is needed. Uninstalling the npm package intentionally leaves user data in place for recovery.
 
-```text
-ModeDOCK.Cli → ModeDOCK.Core
-npm shim    → packaged native CLI
-```
+---
 
-The CLI layer should contain command parsing and presentation only. File safety, profiles, manifests, installation logic, backup handling, and validation belong in the core layer.
+## Development
 
-## 🧪 Development
-
-### Requirements
-
-- Windows x64
-- .NET 10 SDK
-- Node.js 18 or newer
-- npm
-
-### Common tasks
-
-```powershell
-dotnet build ModeDOCK.slnx -c Release
-npm run dev:cli -- --help
-npm run test:core
-npm run build
-npm run test:cli
-npm run test:install
-npm pack --dry-run
-```
-
-`npm run build` creates a compressed, self-contained executable in `dist/win-x64`.
-
-`npm test` expects the release executable to exist. `npm run test:install` packs and installs ModeDOCK into an isolated temporary global prefix. `npm pack` should build and test automatically through `prepack`.
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for invariants and extension points, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the development workflow.
-
-## 📤 Publishing to npm
-
-Before the first public release:
-
-1. Confirm that the npm package name `moddock` is available.
-2. Set `"name": "moddock"` and `"license": "MIT"` in `package.json`.
-3. Configure the `bin` field so the global executable is `moddock`.
-4. Add the real `repository`, `bugs`, `homepage`, and author metadata.
-5. Keep the .NET and npm package versions identical.
-6. Run all tests and inspect the package contents.
-7. Authenticate with npm and publish.
-
-```powershell
+```bash
+npm run typecheck
 npm test
-npm pack --dry-run
-npm login
-npm publish
+npm run build
+npm run verify
+npm run test:install
 ```
 
-For every later release, update both version sources, rebuild, test, pack, and publish.
+The published npm package contains only the bundled CLI, this README, and npm metadata. It has no runtime dependencies; TypeScript, esbuild, and test packages are development dependencies only.
 
-## 🔒 Security
+### Documentation
 
-ModeDOCK protects its own file operations by validating destinations, tracking ownership, rejecting unsafe archive paths, creating backups, and checking managed files with SHA-256.
+- [`COMMANDS.md`](COMMANDS.md) — complete CLI command reference.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture and internal structure.
+- [`docs/ADAPTERS.md`](docs/ADAPTERS.md) — adapter system and extension points.
 
-These protections do not make third-party mods trustworthy. A compatible game loader may execute DLL code with the permissions of the current user.
+---
 
-Use only trusted sources, verify release information, and inspect unexpected antivirus detections before excluding any file from protection.
+## License
 
-## 📄 License
+The current `package.json` declares `UNLICENSED`.
 
-ModeDOCK is distributed under the [MIT License](LICENSE).
-
-## 🤝 Contributing
-
-Contributions should preserve the safety rules of the core engine and keep the npm layer lightweight. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes.
+Choose and add a real license before accepting outside contributions or publishing the project as open source.
 
 ---
 
 <p align="center">
-  <strong>ModeDOCK</strong><br>
-  Lightweight mod lifecycle management from the terminal.
+  <a href="#modedock">Back to top</a>
 </p>
