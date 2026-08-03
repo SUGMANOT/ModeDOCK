@@ -1,9 +1,6 @@
-[README.md](https://github.com/user-attachments/files/30674633/README.md)
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/modedock-logo-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="./assets/modedock-logo-light.png">
-    <img src="./assets/modedock-logo-light.png" width="720" alt="ModeDOCK">
+    <img width="1143" height="359" alt="modedock-logo-light" src="https://github.com/user-attachments/assets/ea0eb3a5-4a7e-4e35-80a2-e0fb76c84454" />
   </picture>
 </p>
 
