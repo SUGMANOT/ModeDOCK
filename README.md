@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/modedock-logo.png" alt="ModeDOCK Logo" width="700" />
+  <img width="1143" height="359" alt="Group 1" src="https://github.com/user-attachments/assets/0e77c64c-ba9d-4be2-9e7a-b2c634307302" />
 </p>
 
 <h1 align="center">ModeDOCK</h1>
