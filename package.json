@@ -1,8 +1,8 @@
 {
   "name": "moddock",
   "version": "1.0.0-beta.0",
-  "displayVersion": "1.0.0b",
-  "description": "Safety-first CLI/TUI for transactional local mod management and experimental runtime compatibility",
+  "displayVersion": "1.0.0-beta.0",
+  "description": "Safety-first CLI and terminal UI for transactional local game mod management",
   "type": "module",
   "bin": {
     "moddock": "dist/moddock.js"
@@ -17,6 +17,9 @@
     "native/bin/moddock-native-probe.exe",
     "managed/bin/managed-inspector/**",
     "managed/bin/runtime/**",
+    "docs/README.md",
+    "docs/INSTALLATION.md",
+    "docs/DEVELOPMENT.md",
     "docs/NATIVE_ABI.md",
     "docs/RUNTIME_ARCHITECTURE.md",
     "docs/BEPINEX_COMPATIBILITY.md",
@@ -25,7 +28,7 @@
     "docs/ARCHITECTURE.md",
     "docs/ADAPTERS.md",
     "docs/PUBLISHING.md",
-    "docs/RELEASE_1.0.0b.md"
+    "docs/RELEASE_1.0.0-beta.0.md"
   ],
   "engines": {
     "node": ">=20"
@@ -44,18 +47,28 @@
     "verify": "npm run typecheck && npm test && npm run build && npm run test:tui",
     "prepack": "npm run verify"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SUGMANOT/ModeDOCK.git"
+  },
+  "homepage": "https://github.com/SUGMANOT/ModeDOCK#readme",
+  "bugs": {
+    "url": "https://github.com/SUGMANOT/ModeDOCK/issues"
+  },
+  "author": "SugmaNot",
   "keywords": [
     "mods",
     "plugins",
     "mod-manager",
     "game-mods",
     "cli",
-    "terminal",
-    "dll",
+    "terminal-ui",
+    "backup",
+    "integrity",
     "bepinex",
     "harmony"
   ],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "publishConfig": {
     "access": "public",
     "tag": "beta"
