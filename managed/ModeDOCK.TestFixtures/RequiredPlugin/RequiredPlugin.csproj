@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>ModeDOCK.RequiredBepInExPlugin</AssemblyName>
+    <RootNamespace>ModeDOCK.RequiredPlugin</RootNamespace>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\BepInEx.Compat\BepInEx.Compat.csproj" />
+  </ItemGroup>
+</Project>

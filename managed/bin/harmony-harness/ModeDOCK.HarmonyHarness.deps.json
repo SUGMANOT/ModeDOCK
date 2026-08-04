@@ -1,0 +1,53 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0/win-x64",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {},
+    ".NETCoreApp,Version=v10.0/win-x64": {
+      "ModeDOCK.HarmonyHarness/1.0.0": {
+        "dependencies": {
+          "0Harmony": "1.0.0",
+          "0Harmony.Reference": "1.0.0.0"
+        },
+        "runtime": {
+          "ModeDOCK.HarmonyHarness.dll": {}
+        }
+      },
+      "0Harmony/1.0.0": {
+        "runtime": {
+          "0Harmony.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "0Harmony.Reference/1.0.0.0": {
+        "runtime": {
+          "0Harmony.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ModeDOCK.HarmonyHarness/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "0Harmony/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "0Harmony.Reference/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

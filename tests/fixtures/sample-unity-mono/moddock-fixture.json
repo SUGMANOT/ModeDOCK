@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "modedock.controlled-unity-mono.v1",
+  "gameVersion": "1.0.0-test",
+  "unityVersion": "controlled-2026.1",
+  "executable": "ModeDOCK.SampleUnityMonoGame.exe",
+  "executableSha256": "8d50e3a24b3388b7da2eaa150f05b2807f42c1153806150171a81d2f32bfa810"
+}
