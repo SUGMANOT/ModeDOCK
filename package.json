@@ -1,7 +1,7 @@
 {
   "name": "@sugmanot/modedock-core",
-  "version": "0.1.0",
-  "description": "Safety-first package and profile engine for game mod launchers, private registries, and server panels",
+  "version": "0.2.0",
+  "description": "Transactional package engine and Challenge Capsule protocol for game communities, creators, streamers, and launchers",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,6 +16,10 @@
     "./publisher": {
       "types": "./dist/publisher/index.d.ts",
       "import": "./dist/publisher/index.js"
+    },
+    "./challenge": {
+      "types": "./dist/challenge/index.d.ts",
+      "import": "./dist/challenge/index.js"
     }
   },
   "files": [
@@ -38,6 +42,9 @@
   },
   "keywords": [
     "mods",
+    "challenge-capsule",
+    "game-challenge",
+    "streaming",
     "mod-manager",
     "package-manager",
     "game-launcher",
