@@ -31,8 +31,8 @@
     "clean": "node -e \"const fs=require('node:fs');for(const p of ['dist','dist-test'])fs.rmSync(p,{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.build.json && tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.build.json --noEmit && tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test dist-test/test/*.test.js",
-    "test:coverage": "npm run build && node --experimental-test-coverage --test dist-test/test/*.test.js",
+    "test": "npm run build && node scripts/run-tests.mjs",
+    "test:coverage": "npm run build && node scripts/run-tests.mjs --coverage",
     "verify": "npm run typecheck && npm test",
     "prepack": "npm run verify"
   },
