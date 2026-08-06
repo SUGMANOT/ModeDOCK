@@ -13,3 +13,5 @@
 - Added integrity verification.
 - Added package and registry publisher commands.
 - Added a CLI and public TypeScript API.
+- Added automated GitHub Releases with npm tarballs and SHA-256 checksums.
+- Added GitHub Packages publication as `@sugmanot/modedock-core`.
