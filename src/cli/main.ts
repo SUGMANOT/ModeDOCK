@@ -3,13 +3,14 @@ import { ModeDockCore } from "../core/core.js";
 import { ModeDockCoreError } from "../errors.js";
 import { packMod } from "../publisher/pack.js";
 import { buildRegistry } from "../publisher/registry-builder.js";
+import { createChallengeTemplate } from "../challenge/template.js";
 import type { ProfileLockfile, SyncPlan } from "../types.js";
 import { Args } from "./args.js";
 import { HELP } from "./help.js";
 import { Output } from "./output.js";
 
 export async function run(argv = process.argv.slice(2)): Promise<number> {
-  if (argv.length === 1 && argv[0] === "--version") { process.stdout.write("0.1.0\n"); return 0; }
+  if (argv.length === 1 && argv[0] === "--version") { process.stdout.write("0.2.0\n"); return 0; }
   const args = Args.parse(argv);
   if (args.has("help") || !args.positionals.length) { process.stdout.write(HELP); return 0; }
   const output = new Output(args.has("json"));
@@ -28,10 +29,20 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
     output.value(index, `Built registry '${index.name}' with ${Object.keys(index.packages).length} package(s).\n${path.resolve(out)}`);
     return 0;
   }
+  if (command === "capsule" && args.positionals[1] === "init") {
+    const result = await createChallengeTemplate(requiredPositional(args, 2, "challenge directory"), {
+      id: args.required("id"),
+      gameId: args.required("game"),
+      ...(args.get("title") ? { title: args.get("title")! } : {})
+    });
+    output.value(result, `Created Challenge Capsule template.\n${result.manifestPath}`);
+    return 0;
+  }
 
   const core = await ModeDockCore.open({ ...(args.get("data-dir") ? { dataDir: args.get("data-dir")! } : {}) });
   if (command === "profile") return profileCommand(core, args, output);
   if (command === "registry") return registryCommand(core, args, output);
+  if (command === "capsule") return capsuleCommand(core, args, output);
   if (command === "add") {
     const result = await core.add(requiredPositional(args, 1, "profile"), requiredPositional(args, 2, "package"), { dryRun: args.has("dry-run") });
     printSyncResult(output, result); return 0;
@@ -88,6 +99,100 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
     return verification.ok ? 0 : 2;
   }
   throw new ModeDockCoreError(`Unknown command: ${command}`, "USAGE_ERROR");
+}
+
+async function capsuleCommand(core: ModeDockCore, args: Args, output: Output): Promise<number> {
+  const action = requiredPositional(args, 1, "capsule action");
+  if (action === "inspect") {
+    const inspection = await core.challenges.inspect(requiredPositional(args, 2, "capsule file"), args.get("profile"));
+    output.value(inspection, [
+      `${inspection.capsule.title} (${inspection.capsule.id}@${inspection.capsule.version})`,
+      `Integrity: ${inspection.integrity}`,
+      `Environment mode: ${inspection.capsule.environment.mode}`,
+      `Packages: ${Object.keys(inspection.capsule.environment.packages).length}`,
+      ...(inspection.compatible === undefined ? [] : [`Compatible: ${inspection.compatible ? "yes" : "no"}`]),
+      ...inspection.compatibilityIssues.map(issue => `  - ${issue}`)
+    ].join("\n"));
+    return inspection.compatible === false ? 2 : 0;
+  }
+  if (action === "prepare") {
+    const result = await core.challenges.prepare(
+      requiredPositional(args, 2, "profile"),
+      requiredPositional(args, 3, "capsule file"),
+      { dryRun: args.has("dry-run") }
+    );
+    if (!result.session) {
+      output.plan(result.plan);
+      return 0;
+    }
+    output.value(result, [
+      `Prepared '${result.inspection.capsule.title}'.`,
+      `Session: ${result.session.id}`,
+      "Next: arm the session to issue a verifiable ticket."
+    ].join("\n"));
+    return 0;
+  }
+  if (action === "arm") {
+    const ticket = await core.challenges.arm(requiredPositional(args, 2, "session ID"), {
+      ...(args.get("participant") ? { participant: args.get("participant")! } : {})
+    });
+    output.value(ticket, [
+      `Challenge armed: ${ticket.capsuleId}@${ticket.capsuleVersion}`,
+      `Session: ${ticket.sessionId}`,
+      `Ticket: ${ticket.id}`,
+      `Environment: ${ticket.environmentHash}`,
+      "ModeDOCK will not launch the game. Start it manually or through your launcher, then finish the session."
+    ].join("\n"));
+    return 0;
+  }
+  if (action === "finish") {
+    const finished = await core.challenges.finish(requiredPositional(args, 2, "session ID"), {
+      claims: parseClaims(args.all("claim")),
+      ...(args.get("out") ? { outputDir: args.get("out")! } : {}),
+      restore: args.has("restore")
+    });
+    output.value(finished, [
+      `Challenge result: ${finished.result.verdict.valid ? "VALID" : "INCOMPLETE"}`,
+      `Result: ${finished.resultPath}`,
+      `Environment stable: ${finished.result.environmentStable ? "yes" : "no"}`,
+      `Evidence items: ${finished.result.evidence.length}`,
+      ...finished.result.verdict.reasons.map(reason => `  - ${reason}`),
+      ...(args.has("restore") ? ["Original profile requirements restored."] : ["Run capsule restore when you are ready to return to the previous profile."])
+    ].join("\n"));
+    return finished.result.verdict.valid ? 0 : 2;
+  }
+  if (action === "restore") {
+    const restored = await core.challenges.restore(requiredPositional(args, 2, "session ID"), { dryRun: args.has("dry-run") });
+    if (!restored.session) { output.plan(restored.plan); return 0; }
+    output.value(restored, `Restored profile '${restored.session.profileId}' after challenge '${restored.session.capsule.title}'.`);
+    return 0;
+  }
+  if (action === "status") {
+    const sessionId = args.positionals[2];
+    if (sessionId) {
+      const session = await core.challenges.get(sessionId);
+      output.value(session, JSON.stringify(session, null, 2));
+      return 0;
+    }
+    const sessions = await core.challenges.list();
+    output.value(sessions, sessions.length ? sessions.map(session => `${session.id}  ${session.status.padEnd(10)}  ${session.capsule.id}@${session.capsule.version}`).join("\n") : "No challenge sessions.");
+    return 0;
+  }
+  throw new ModeDockCoreError(`Unknown capsule action: ${action}`, "USAGE_ERROR");
+}
+
+function parseClaims(values: string[]): Record<string, string | number | boolean> {
+  const result: Record<string, string | number | boolean> = {};
+  for (const value of values) {
+    const separator = value.indexOf("=");
+    if (separator <= 0) throw new ModeDockCoreError(`Invalid claim: ${value}`, "USAGE_ERROR");
+    const key = value.slice(0, separator);
+    const raw = value.slice(separator + 1);
+    if (raw === "true" || raw === "false") result[key] = raw === "true";
+    else if (/^-?(?:\d+|\d*\.\d+)$/.test(raw)) result[key] = Number(raw);
+    else result[key] = raw;
+  }
+  return result;
 }
 
 async function profileCommand(core: ModeDockCore, args: Args, output: Output): Promise<number> {

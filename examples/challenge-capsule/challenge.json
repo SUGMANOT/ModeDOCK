@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "modedock.example-challenge",
+  "version": "1.0.0",
+  "title": "Example Challenge Capsule",
+  "summary": "A small reference capsule that demonstrates environment preparation, session tickets, claims, evidence, and restoration without launching a game.",
+  "authors": ["ModeDOCK contributors"],
+  "tags": ["example", "streaming", "launcher"],
+  "audience": ["player", "streamer", "creator", "launcher"],
+  "game": {
+    "id": "example-game",
+    "version": ">=1.0.0 <2.0.0",
+    "loader": {
+      "id": "bepinex",
+      "version": "^5.4.0"
+    }
+  },
+  "environment": {
+    "mode": "overlay",
+    "packages": {}
+  },
+  "brief": {
+    "objective": "Complete any test run and write an optional result file under saves/challenge-result.json.",
+    "rules": [
+      "Do not change the managed ModeDOCK package environment after arming the session.",
+      "Start the game or test application through your normal launcher."
+    ],
+    "notes": [
+      "The example has no package requirements, so it can be tested with an empty game directory.",
+      "The evidence file is optional; the score and completed claims are required."
+    ],
+    "estimatedMinutes": 10,
+    "difficulty": "casual"
+  },
+  "evidence": {
+    "requireStableEnvironment": true,
+    "watch": [
+      {
+        "path": "saves/challenge-result.json",
+        "capture": "copy",
+        "required": false,
+        "maxBytes": 1048576
+      }
+    ],
+    "claims": [
+      {
+        "id": "score",
+        "label": "Final score",
+        "type": "number",
+        "required": true
+      },
+      {
+        "id": "completed",
+        "label": "Challenge completed",
+        "type": "boolean",
+        "required": true
+      }
+    ]
+  },
+  "handoff": {
+    "label": "Start with Steam, a shortcut, or your own launcher",
+    "instructions": [
+      "Keep the generated ticket until the run is complete.",
+      "ModeDOCK does not launch or monitor the game process.",
+      "Finish the session with score and completed claims."
+    ],
+    "consumerData": {
+      "example": "true",
+      "overlay-scene": "challenge"
+    }
+  }
+}

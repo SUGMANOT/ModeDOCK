@@ -3,6 +3,10 @@ export const REGISTRY_SCHEMA_VERSION = 1 as const;
 export const PROFILE_SCHEMA_VERSION = 1 as const;
 export const LOCK_SCHEMA_VERSION = 1 as const;
 export const JOURNAL_SCHEMA_VERSION = 1 as const;
+export const CHALLENGE_CAPSULE_SCHEMA_VERSION = 1 as const;
+export const CHALLENGE_SESSION_SCHEMA_VERSION = 1 as const;
+export const CHALLENGE_TICKET_SCHEMA_VERSION = 1 as const;
+export const CHALLENGE_RESULT_SCHEMA_VERSION = 1 as const;
 
 export type PlatformName = NodeJS.Platform;
 export type ArchitectureName = NodeJS.Architecture;
@@ -265,4 +269,197 @@ export interface ApplyOptions {
 
 export interface PublisherOptions {
   baseUrl?: string;
+}
+
+export type ChallengeAudience = "player" | "streamer" | "creator" | "launcher";
+export type ChallengeEnvironmentMode = "overlay" | "exact";
+export type ChallengeEvidenceCapture = "hash" | "copy";
+export type ChallengeClaimType = "string" | "number" | "boolean";
+export type ChallengeSessionStatus = "preparing" | "prepared" | "armed" | "completed" | "restored";
+
+export interface ChallengeEvidenceRule {
+  /** Relative path below the game root. The game root itself is intentionally forbidden. */
+  path: string;
+  capture?: ChallengeEvidenceCapture;
+  required?: boolean;
+  /** Maximum total bytes inspected or copied for this evidence item. */
+  maxBytes?: number;
+}
+
+export interface ChallengeClaimDefinition {
+  id: string;
+  label: string;
+  type: ChallengeClaimType;
+  required?: boolean;
+  description?: string;
+}
+
+export interface ChallengeCapsuleManifest {
+  schemaVersion: typeof CHALLENGE_CAPSULE_SCHEMA_VERSION;
+  id: string;
+  version: string;
+  title: string;
+  summary?: string;
+  authors?: string[];
+  homepage?: string;
+  tags?: string[];
+  audience?: ChallengeAudience[];
+  game: {
+    id: string;
+    version?: string;
+    loader?: {
+      id: string;
+      version?: string;
+    };
+    platforms?: PlatformName[];
+    architectures?: ArchitectureName[];
+  };
+  environment: {
+    mode: ChallengeEnvironmentMode;
+    packages: PackageDependencyMap;
+  };
+  brief: {
+    objective: string;
+    rules?: string[];
+    notes?: string[];
+    estimatedMinutes?: number;
+    difficulty?: "casual" | "standard" | "hard" | "extreme";
+  };
+  evidence?: {
+    watch?: ChallengeEvidenceRule[];
+    claims?: ChallengeClaimDefinition[];
+    requireStableEnvironment?: boolean;
+  };
+  /** Human or launcher-facing handoff metadata. ModeDOCK never executes it. */
+  handoff?: {
+    label?: string;
+    instructions?: string[];
+    consumerData?: Record<string, string>;
+  };
+}
+
+export interface ChallengeInspection {
+  source: string;
+  capsule: ChallengeCapsuleManifest;
+  integrity: string;
+  compatible?: boolean;
+  compatibilityIssues: string[];
+}
+
+export interface ChallengeEvidenceEntry {
+  path: string;
+  exists: boolean;
+  kind?: "file" | "directory";
+  sha256?: string;
+  size: number;
+  entries: number;
+}
+
+export interface ChallengeEvidenceDelta {
+  path: string;
+  capture: ChallengeEvidenceCapture;
+  required: boolean;
+  before: ChallengeEvidenceEntry;
+  after: ChallengeEvidenceEntry;
+  changed: boolean;
+  copiedTo?: string;
+}
+
+export interface ChallengeTicket {
+  schemaVersion: typeof CHALLENGE_TICKET_SCHEMA_VERSION;
+  id: string;
+  sessionId: string;
+  profileId: string;
+  capsuleId: string;
+  capsuleVersion: string;
+  capsuleIntegrity: string;
+  issuedAt: string;
+  nonce: string;
+  participant?: string;
+  environmentHash: string;
+  baselineHash: string;
+  objective: string;
+  rules: string[];
+  handoff?: ChallengeCapsuleManifest["handoff"];
+  integrity: string;
+}
+
+export interface ChallengeSession {
+  schemaVersion: typeof CHALLENGE_SESSION_SCHEMA_VERSION;
+  id: string;
+  profileId: string;
+  capsuleSource: string;
+  capsule: ChallengeCapsuleManifest;
+  capsuleIntegrity: string;
+  status: ChallengeSessionStatus;
+  previousRequirements: PackageDependencyMap;
+  effectiveRequirements: PackageDependencyMap;
+  preparedAt?: string;
+  armedAt?: string;
+  completedAt?: string;
+  restoredAt?: string;
+  baseline?: ChallengeEvidenceEntry[];
+  ticket?: ChallengeTicket;
+  resultPath?: string;
+}
+
+export interface ChallengeResult {
+  schemaVersion: typeof CHALLENGE_RESULT_SCHEMA_VERSION;
+  id: string;
+  sessionId: string;
+  profileId: string;
+  capsuleId: string;
+  capsuleVersion: string;
+  capsuleIntegrity: string;
+  ticketIntegrity: string;
+  participant?: string;
+  startedAt: string;
+  finishedAt: string;
+  environmentBefore: string;
+  environmentAfter: string;
+  environmentStable: boolean;
+  evidence: ChallengeEvidenceDelta[];
+  claims: Record<string, string | number | boolean>;
+  verdict: {
+    valid: boolean;
+    requiredEvidencePresent: boolean;
+    requiredClaimsPresent: boolean;
+    reasons: string[];
+  };
+  integrity: string;
+}
+
+export interface PrepareChallengeOptions extends ApplyOptions {}
+
+export interface PrepareChallengeResult {
+  inspection: ChallengeInspection;
+  plan: SyncPlan;
+  session?: ChallengeSession;
+}
+
+export interface ArmChallengeInput {
+  participant?: string;
+}
+
+export interface FinishChallengeInput {
+  claims?: Record<string, string | number | boolean>;
+  outputDir?: string;
+  restore?: boolean;
+}
+
+export interface FinishChallengeResult {
+  result: ChallengeResult;
+  resultPath: string;
+  session: ChallengeSession;
+}
+
+export interface RestoreChallengeResult {
+  plan: SyncPlan;
+  session?: ChallengeSession;
+}
+
+export interface CreateChallengeTemplateInput {
+  id: string;
+  gameId: string;
+  title?: string;
 }

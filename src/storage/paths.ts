@@ -13,12 +13,18 @@ export class CorePaths {
   readonly profiles: string;
   readonly transactions: string;
   readonly cache: string;
+  readonly challenges: string;
+  readonly challengeSessions: string;
+  readonly challengeResults: string;
 
   constructor(root: string) {
     this.root = path.resolve(root);
     this.profiles = path.join(this.root, "profiles");
     this.transactions = path.join(this.root, "transactions");
     this.cache = path.join(this.root, "cache");
+    this.challenges = path.join(this.root, "challenges");
+    this.challengeSessions = path.join(this.challenges, "sessions");
+    this.challengeResults = path.join(this.challenges, "results");
   }
 
   profileDir(profileId: string): string { return path.join(this.profiles, validateId(profileId, "profile ID")); }
@@ -31,4 +37,10 @@ export class CorePaths {
   journal(transactionId: string): string { return path.join(this.transactionDir(transactionId), "journal.json"); }
   staging(transactionId: string): string { return path.join(this.transactionDir(transactionId), "staging"); }
   snapshots(transactionId: string): string { return path.join(this.transactionDir(transactionId), "snapshots"); }
+  challengeSessionDir(sessionId: string): string { return path.join(this.challengeSessions, validateId(sessionId, "challenge session ID")); }
+  challengeSession(sessionId: string): string { return path.join(this.challengeSessionDir(sessionId), "session.json"); }
+  challengeSessionMutex(sessionId: string): string { return path.join(this.challengeSessionDir(sessionId), ".session.lock"); }
+  challengeProfileMutex(profileId: string): string { return path.join(this.profileDir(profileId), ".challenge.lock"); }
+  challengeResultDir(resultId: string): string { return path.join(this.challengeResults, validateId(resultId, "challenge result ID")); }
+  challengeResult(resultId: string): string { return path.join(this.challengeResultDir(resultId), "result.json"); }
 }
