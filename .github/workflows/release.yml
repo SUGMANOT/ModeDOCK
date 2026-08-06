@@ -1,0 +1,114 @@
+name: Release and publish
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out verified commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@sugmanot'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify release source
+        run: npm run verify
+
+      - name: Build release metadata and package
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          PACKAGE="$(node -p "require('./package.json').name")"
+          TAG="v${VERSION}"
+          TARBALL="$(npm pack --silent)"
+
+          export VERSION
+          node <<'NODE'
+          const fs = require('node:fs');
+          const version = process.env.VERSION;
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const heading = `## ${version}`;
+          const headingOffset = changelog.indexOf(heading);
+          const bodyOffset = headingOffset >= 0 ? changelog.indexOf('\n', headingOffset) + 1 : -1;
+          const nextHeading = bodyOffset > 0 ? changelog.indexOf('\n## ', bodyOffset) : -1;
+          const notes = bodyOffset > 0
+            ? changelog.slice(bodyOffset, nextHeading >= 0 ? nextHeading : undefined).trim()
+            : `ModeDOCK Core ${version}.`;
+          fs.writeFileSync('RELEASE_NOTES.md', `${notes}\n`);
+          NODE
+
+          sha256sum "$TARBALL" > SHA256SUMS.txt
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_NAME: ${{ steps.metadata.outputs.package }}
+          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
+          else
+            npm publish
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          TARBALL: ${{ steps.metadata.outputs.tarball }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "ModeDOCK Core $VERSION"
+          git push origin "$TAG"
+
+          gh release create "$TAG" \
+            "$TARBALL" \
+            SHA256SUMS.txt \
+            --title "ModeDOCK Core $VERSION" \
+            --notes-file RELEASE_NOTES.md \
+            --verify-tag

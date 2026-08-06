@@ -1,5 +1,5 @@
 {
-  "name": "@modedock/core",
+  "name": "@sugmanot/modedock-core",
   "version": "0.1.0",
   "description": "Safety-first package and profile engine for game mod launchers, private registries, and server panels",
   "type": "module",
@@ -53,5 +53,13 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.8.0"
+  },
+  "homepage": "https://github.com/SUGMANOT/ModeDOCK#readme",
+  "bugs": {
+    "url": "https://github.com/SUGMANOT/ModeDOCK/issues"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
   }
 }
