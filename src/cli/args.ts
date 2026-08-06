@@ -1,52 +1,47 @@
-import { UsageError } from "../core/errors.js";
+import { ModeDockCoreError } from "../errors.js";
 
-const booleanOptions = new Set(["help", "version", "json", "quiet", "verbose", "force", "dry-run", "no-backup", "all", "execute-probe"]);
-const aliases: Record<string, string> = { h: "help", v: "version", q: "quiet", t: "target", f: "force" };
-
-export class ParsedArgs {
+export class Args {
   readonly positionals: string[] = [];
-  readonly options = new Map<string, string | boolean>();
+  readonly options = new Map<string, string[]>();
 
-  static parse(argv: string[]): ParsedArgs {
-    const result = new ParsedArgs();
-    let positionalOnly = false;
+  static parse(argv: string[]): Args {
+    const result = new Args();
     for (let index = 0; index < argv.length; index++) {
       const token = argv[index]!;
-      if (positionalOnly || token === "-" || !token.startsWith("-")) { result.positionals.push(token); continue; }
-      if (token === "--") { positionalOnly = true; continue; }
-      let key: string;
-      let value: string | boolean | undefined;
-      if (token.startsWith("--")) {
-        const option = token.slice(2);
-        const split = option.indexOf("=");
-        key = split >= 0 ? option.slice(0, split) : option;
-        if (split >= 0) value = option.slice(split + 1);
-      } else {
-        key = aliases[token.slice(1)] ?? "";
-        if (!key) throw new UsageError(`Unknown option: ${token}`);
+      if (!token.startsWith("--")) { result.positionals.push(token); continue; }
+      const equal = token.indexOf("=");
+      const key = token.slice(2, equal === -1 ? undefined : equal);
+      if (!key) throw new ModeDockCoreError(`Invalid option: ${token}`, "USAGE_ERROR");
+      const value = equal === -1 ? argv[index + 1] : token.slice(equal + 1);
+      if (isBooleanOption(key)) {
+        result.push(key, equal === -1 ? "true" : value ?? "true");
+        continue;
       }
-      if (!key) throw new UsageError("Option name cannot be empty.");
-      if (result.options.has(key)) throw new UsageError(`Option --${key} was supplied more than once.`);
-      if (booleanOptions.has(key)) {
-        if (value !== undefined) throw new UsageError(`Option --${key} does not take a value.`);
-        value = true;
-      } else if (value === undefined) {
-        const next = argv[index + 1];
-        if (next === undefined || next.startsWith("-")) throw new UsageError(`Option --${key} requires a value.`);
-        value = next; index++;
+      if (value === undefined || (equal === -1 && value.startsWith("--"))) {
+        throw new ModeDockCoreError(`Option --${key} requires a value.`, "USAGE_ERROR");
       }
-      result.options.set(key, value);
+      result.push(key, value);
+      if (equal === -1) index++;
     }
     return result;
   }
 
-  has(key: string): boolean { return this.options.has(key); }
-  get(key: string): string | undefined { const value = this.options.get(key); return typeof value === "string" ? value : undefined; }
-  require(key: string): string { const value = this.get(key); if (!value) throw new UsageError(`Missing required option --${key}.`); return value; }
-
-  ensureOnly(...allowedForCommand: string[]): void {
-    const global = new Set(["help", "version", "json", "quiet", "verbose", "config", "data-dir", "target", "force", "dry-run", "no-backup"]);
-    for (const key of this.options.keys()) if (!global.has(key) && !allowedForCommand.includes(key))
-      throw new UsageError(`Option --${key} is not valid for this command.`);
+  get(key: string): string | undefined { return this.options.get(key)?.at(-1); }
+  all(key: string): string[] { return [...(this.options.get(key) ?? [])]; }
+  has(key: string): boolean { return this.get(key) === "true"; }
+  required(key: string): string {
+    const value = this.get(key);
+    if (!value) throw new ModeDockCoreError(`Missing required option --${key}.`, "USAGE_ERROR");
+    return value;
   }
+
+  private push(key: string, value: string): void {
+    const values = this.options.get(key) ?? [];
+    values.push(value);
+    this.options.set(key, values);
+  }
+}
+
+function isBooleanOption(key: string): boolean {
+  return new Set(["json", "dry-run", "help"]).has(key);
 }
