@@ -15,3 +15,4 @@
 - Added a CLI and public TypeScript API.
 - Added automated GitHub Releases with npm tarballs and SHA-256 checksums.
 - Added GitHub Packages publication as `@sugmanot/modedock-core`.
+- Added an idempotent release workflow for verified pushes to `main`.
