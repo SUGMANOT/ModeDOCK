@@ -6,9 +6,7 @@ const ID_PATTERN = /^[a-z0-9][a-z0-9._-]{1,127}$/;
 const URL_PROTOCOLS = new Set(["http:", "https:", "file:"]);
 
 export function validateId(value: unknown, label = "identifier"): string {
-  if (typeof value !== "string" || !ID_PATTERN.test(value)) {
-    throw new ValidationError(`Invalid ${label}: ${String(value)}`);
-  }
+  if (typeof value !== "string" || !ID_PATTERN.test(value)) throw new ValidationError(`Invalid ${label}: ${String(value)}`);
   return value;
 }
 
@@ -33,7 +31,6 @@ export function validateResourceLocation(value: string, label: string): void {
     if (!URL_PROTOCOLS.has(parsed.protocol)) throw new ValidationError(`${label} uses an unsupported protocol: ${parsed.protocol}`);
   } catch (error) {
     if (error instanceof ValidationError) throw error;
-    // Relative locations are valid inside registry and descriptor documents.
     if (!value.trim()) throw new ValidationError(`${label} cannot be empty.`);
   }
 }
@@ -41,9 +38,7 @@ export function validateResourceLocation(value: string, label: string): void {
 export function validateDependencyMap(value: unknown, label: string): Record<string, string> {
   const input = asRecord(value, label);
   const result: Record<string, string> = {};
-  for (const [packageId, range] of Object.entries(input)) {
-    result[validateId(packageId, `${label} package ID`)] = expectString(range, `${label}.${packageId}`);
-  }
+  for (const [packageId, range] of Object.entries(input)) result[validateId(packageId, `${label} package ID`)] = expectString(range, `${label}.${packageId}`);
   return result;
 }
 
@@ -76,6 +71,11 @@ export function expectBoolean(value: unknown, label: string): boolean {
 export function expectInteger(value: unknown, label: string, minimum: number): number {
   if (!Number.isSafeInteger(value) || Number(value) < minimum) throw new ValidationError(`${label} must be an integer >= ${minimum}.`);
   return Number(value);
+}
+
+export function expectNumber(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) throw new ValidationError(`${label} must be a finite number.`);
+  return value;
 }
 
 export function expectStringArray(value: unknown, label: string): string[] {
