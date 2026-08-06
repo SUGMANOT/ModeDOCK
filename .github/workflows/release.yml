@@ -45,7 +45,8 @@ jobs:
           VERSION="$(node -p "require('./package.json').version")"
           PACKAGE="$(node -p "require('./package.json').name")"
           TAG="v${VERSION}"
-          TARBALL="$(npm pack --silent)"
+          TARBALL="$(npm pack --silent | tail -n 1)"
+          test -f "$TARBALL"
 
           export VERSION
           node <<'NODE'
@@ -68,20 +69,6 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
 
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGE_NAME: ${{ steps.metadata.outputs.package }}
-          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
-            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
-          else
-            npm publish
-          fi
-
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,19 +78,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "ModeDOCK Core $VERSION"
-          git push origin "$TAG"
 
-          gh release create "$TAG" \
-            "$TARBALL" \
-            SHA256SUMS.txt \
-            --title "ModeDOCK Core $VERSION" \
-            --notes-file RELEASE_NOTES.md \
-            --verify-tag
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git tag -a "$TAG" -m "ModeDOCK Core $VERSION"
+            git push origin "$TAG"
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists."
+          else
+            gh release create "$TAG" \
+              "$TARBALL" \
+              SHA256SUMS.txt \
+              --title "ModeDOCK Core $VERSION" \
+              --notes-file RELEASE_NOTES.md \
+              --verify-tag
+          fi
+
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_NAME: ${{ steps.metadata.outputs.package }}
+          PACKAGE_VERSION: ${{ steps.metadata.outputs.version }}
+          TARBALL: ${{ steps.metadata.outputs.tarball }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} is already published."
+          else
+            npm publish "$TARBALL" --registry=https://npm.pkg.github.com
+          fi
