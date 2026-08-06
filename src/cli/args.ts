@@ -43,5 +43,5 @@ export class Args {
 }
 
 function isBooleanOption(key: string): boolean {
-  return new Set(["json", "dry-run", "help"]).has(key);
+  return new Set(["json", "dry-run", "help", "restore"]).has(key);
 }
