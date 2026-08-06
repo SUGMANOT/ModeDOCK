@@ -1,6 +1,17 @@
-# Быстрый старт ModeDOCK Core
+# Быстрый старт ModeDOCK Core 0.2
 
-ModeDOCK Core — это ядро для собственного менеджера модов, launcher или панели игрового сервера. Пользователь работает с профилями и пакетами, а ядро отвечает за зависимости, проверку файлов, резервные копии и откат.
+ModeDOCK Core — это безопасное ядро для управления модифицированными окружениями и **Challenge Capsules**.
+
+Challenge Capsule — не исполняемый файл и не кнопка запуска игры. Это переносимый контракт испытания, который описывает:
+
+- подходящую игру и loader;
+- необходимые пакеты и версии;
+- цель и правила;
+- файлы, которые нужно проверить до и после прохождения;
+- данные результата: очки, время, seed, факт завершения;
+- подсказки для launcher, OBS или Discord-бота.
+
+ModeDOCK подготавливает окружение, выдаёт ticket, ждёт, пока пользователь сам запустит игру, затем формирует result bundle и может вернуть предыдущий профиль.
 
 ## Установка из исходников
 
@@ -27,31 +38,89 @@ moddock-core profile create coop `
   --dest config=BepInEx/config
 ```
 
-`--dest` связывает логические назначения пакетов с реальными каталогами игры.
+## Пример Challenge Capsule
 
-## Подключение registry
+Проверить файл и совместимость:
+
+```powershell
+moddock-core capsule inspect `
+  .\examples\challenge-capsule\challenge.json `
+  --profile coop
+```
+
+Посмотреть план без изменений:
+
+```powershell
+moddock-core capsule prepare `
+  coop `
+  .\examples\challenge-capsule\challenge.json `
+  --dry-run
+```
+
+Подготовить окружение:
+
+```powershell
+moddock-core capsule prepare coop .\examples\challenge-capsule\challenge.json
+```
+
+Команда вернёт `session-id`. Затем нужно активировать испытание:
+
+```powershell
+moddock-core capsule arm <session-id> --participant streamer-name
+```
+
+После этого пользователь запускает игру самостоятельно: через Steam, ярлык или свой launcher. ModeDOCK не запускает процессы из Capsule.
+
+Завершить испытание:
+
+```powershell
+moddock-core capsule finish <session-id> `
+  --claim score=4200 `
+  --claim completed=true `
+  --out .\challenge-result
+```
+
+Вернуть предыдущий профиль:
+
+```powershell
+moddock-core capsule restore <session-id>
+```
+
+Можно завершить и восстановить одной командой, добавив `--restore`.
+
+## Создание своей Capsule
+
+```powershell
+moddock-core capsule init .\my-challenge `
+  --id author.my-challenge `
+  --game example-game `
+  --title "No Healing Run"
+```
+
+Будут созданы `challenge.json` и README. Отредактируйте цель, правила, пакеты, evidence и claims, затем проверьте:
+
+```powershell
+moddock-core capsule inspect .\my-challenge\challenge.json
+```
+
+Полное описание: [`CHALLENGE_CAPSULES.md`](CHALLENGE_CAPSULES.md).
+
+## Обычная установка пакетов
+
+Подключить registry:
 
 ```powershell
 moddock-core registry add coop community C:\ModeDOCKRegistry\registry.json
 ```
 
-Registry можно разместить на обычном HTTPS-хостинге или GitHub Pages.
-
-## Установка
-
-Сначала обязательно просмотрите план:
+Предпросмотр и установка:
 
 ```powershell
 moddock-core add coop author.example-mod@^1.0.0 --dry-run
-```
-
-Затем примените:
-
-```powershell
 moddock-core add coop author.example-mod@^1.0.0
 ```
 
-## Проверка и восстановление
+Проверка и восстановление транзакций:
 
 ```powershell
 moddock-core verify coop
@@ -59,43 +128,6 @@ moddock-core transactions
 moddock-core recover <transaction-id>
 ```
 
-При внешнем изменении управляемого файла ModeDOCK Core прекращает опасную операцию, а не перезаписывает изменение молча.
+## Важно о результатах
 
-## Создание собственного пакета
-
-В каталоге мода создайте `moddock.json`:
-
-```json
-{
-  "schemaVersion": 1,
-  "id": "author.example-mod",
-  "version": "1.0.0",
-  "name": "Example Mod",
-  "game": {
-    "id": "example-game",
-    "version": ">=1.4.0 <2.0.0"
-  },
-  "loader": {
-    "id": "bepinex",
-    "version": "^5.4.0"
-  },
-  "dependencies": {
-    "author.common-api": "^2.0.0"
-  },
-  "files": [
-    {
-      "source": "ExampleMod.dll",
-      "destination": "plugins"
-    }
-  ]
-}
-```
-
-Соберите пакет и индекс:
-
-```powershell
-moddock-core pack .\example-mod --out .\registry
-moddock-core registry build .\registry --name "My Game Mods"
-```
-
-Теперь `registry` можно опубликовать как набор статических файлов.
+Ticket и result защищены SHA-256 от незаметного изменения, но версия 0.2 ещё не подписывает их ключом автора или участника. Это не античит и не доказательство личности. ModeDOCK проверяет только управляемое окружение, объявленные evidence-файлы и переданные claims.
