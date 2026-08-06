@@ -25,11 +25,12 @@ import { verifyProfile } from "./verifier.js";
 import { sha256Object } from "../utils/hash.js";
 import { normalizeResource } from "../registry/resource.js";
 import { readJsonFile } from "../storage/json.js";
-import type { TransactionJournal } from "../types.js";
+import { ChallengeManager } from "../challenge/manager.js";
 
 export class ModeDockCore {
   readonly paths: CorePaths;
   readonly profiles: ProfileStore;
+  readonly challenges: ChallengeManager;
   private readonly now: () => Date;
   private readonly fetchImpl: typeof fetch;
   private readonly planner: SyncPlanner;
@@ -42,6 +43,7 @@ export class ModeDockCore {
     this.fetchImpl = options.fetch ?? globalThis.fetch;
     this.planner = new SyncPlanner(this.paths, this.now);
     this.executor = new TransactionExecutor(this.paths, this.profiles, options);
+    this.challenges = new ChallengeManager(this, this.fetchImpl, this.now);
   }
 
   static async open(options: CoreOptions = {}): Promise<ModeDockCore> {
@@ -49,7 +51,9 @@ export class ModeDockCore {
     await Promise.all([
       mkdir(core.paths.profiles, { recursive: true }),
       mkdir(core.paths.transactions, { recursive: true }),
-      mkdir(core.paths.cache, { recursive: true })
+      mkdir(core.paths.cache, { recursive: true }),
+      mkdir(core.paths.challengeSessions, { recursive: true }),
+      mkdir(core.paths.challengeResults, { recursive: true })
     ]);
     return core;
   }
@@ -157,7 +161,6 @@ export class ModeDockCore {
     if (packageId && !(packageId in profile.requirements)) {
       throw new ModeDockCoreError(`Package is not a direct profile requirement: ${packageId}`, "REQUIREMENT_NOT_FOUND");
     }
-    // Resolution always selects the highest version satisfying the stored ranges.
     return this.syncRequirements(profileId, profile.requirements, options);
   }
 
@@ -175,7 +178,9 @@ export class ModeDockCore {
         try {
           const journal = validateJournal(await readJsonFile<unknown>(this.paths.journal(entry.name)));
           result.push({ id: journal.id, profileId: journal.profileId, state: journal.state, createdAt: journal.createdAt });
-        } catch { /* corrupt journals remain visible to doctor through filesystem inspection */ }
+        } catch {
+          // Damaged journals remain on disk for doctor/manual inspection.
+        }
       }
       return result.sort((left, right) => left.createdAt.localeCompare(right.createdAt));
     } catch (error) {
