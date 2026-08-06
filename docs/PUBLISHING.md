@@ -15,33 +15,37 @@ git push -u origin main
 
 Enable GitHub private vulnerability reporting and branch protection for `main` after the first push.
 
-## npm
+## GitHub Releases and Packages
 
-The repository currently uses the package name `@modedock/core`. Publishing that exact name requires control of the `modedock` npm scope. Change `name`, repository URLs, and documentation imports before publication if you use another scope.
+The public package name is `@sugmanot/modedock-core`. Its npm scope matches the GitHub repository owner, as required by GitHub Packages.
 
-Verify the exact artifact:
+After a successful `CI` run for a push to `main`, `.github/workflows/release.yml`:
+
+1. verifies the exact commit again;
+2. builds the npm tarball;
+3. publishes the version to GitHub Packages when it is not already present;
+4. creates the matching `v<version>` tag;
+5. creates a GitHub Release with the tarball and `SHA256SUMS.txt`.
+
+Published package versions and Git tags are immutable. Increase `version` in `package.json` and add the matching section to `CHANGELOG.md` before the next release.
+
+To install from GitHub Packages, authenticate npm with a GitHub token that has `read:packages`:
+
+```bash
+npm config set @sugmanot:registry https://npm.pkg.github.com
+npm config set //npm.pkg.github.com/:_authToken YOUR_GITHUB_TOKEN
+npm install @sugmanot/modedock-core
+```
+
+To test the exact release artifact locally:
 
 ```bash
 npm install
 npm run verify
 npm pack
-```
-
-Test it in an isolated prefix:
-
-```bash
-npm install -g ./modedock-core-0.1.0.tgz --prefix ./npm-test
+npm install -g ./sugmanot-modedock-core-0.1.0.tgz --prefix ./npm-test
 ./npm-test/bin/moddock-core --version
 ```
-
-Publish a pre-1.0 release:
-
-```bash
-npm login
-npm publish --access public
-```
-
-Do not rebuild between the final verification and publication. Publish the exact tarball that passed installation testing when using a release automation pipeline.
 
 ## Static example registry
 

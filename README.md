@@ -13,40 +13,67 @@
 
 </div>
 
-ModeDOCK Core is infrastructure, not another mod catalog or graphical manager. It gives a launcher or hosting panel a strict package model, dependency resolver, reproducible profiles, verified downloads, transactional file operations, rollback, and recovery.
+ModeDOCK Core is infrastructure, not a competing mod catalog or graphical manager. It gives a launcher or hosting panel a strict package model, dependency resolver, reproducible profiles, verified downloads, transactional file operations, rollback, and recovery.
 
-A product built on ModeDOCK can provide a familiar **Install / Update / Remove / Verify** workflow without reimplementing the dangerous filesystem layer.
+A product built on ModeDOCK can provide a familiar **Install / Update / Remove / Verify** experience without reimplementing the dangerous filesystem layer.
 
 ## Why use it
 
-- **Declarative packages.** Files, destinations, dependencies, conflicts, and compatibility constraints are described in `moddock.json`.
-- **Reproducible profiles.** Exact versions and file ownership are recorded in `moddock.lock.json`.
-- **Safe previews.** Every mutation is represented as a plan that can be reviewed before application.
-- **Verified artifacts.** Descriptors and payloads are checked by SHA-256 and declared size.
-- **Transactional changes.** Locks, staging, journals, backups, rollback, and startup recovery protect the game directory.
-- **Static registries.** Host a registry on GitHub Pages, object storage, a CDN, or any HTTPS server.
-- **Embeddable API.** Use the same TypeScript API in Electron, Tauri, a custom launcher, a server panel, or automation.
+- **Declarative packages.** Every installed file, destination, dependency, conflict, and compatibility constraint is described in `moddock.json`.
+- **Reproducible profiles.** Exact resolved versions and owned files are recorded in `moddock.lock.json`.
+- **Safe previews.** Mutations are represented as a plan that can be shown to the user before it is applied.
+- **Verified artifacts.** Package descriptors and payloads are checked by SHA-256 and declared size.
+- **Transactional changes.** Per-profile locks, staging, write-ahead journals, backups, rollback, and interrupted-operation recovery protect the game directory.
+- **Static registries.** A registry can be hosted on GitHub Pages, object storage, a CDN, or an ordinary HTTPS server.
+- **Embeddable API.** The same TypeScript API can power Electron, Tauri, a custom launcher, a server panel, or automation.
 
-ModeDOCK Core does **not** execute lifecycle scripts, inject DLLs, attach to game processes, bypass DRM or anti-cheat, or claim to sandbox a plugin after the game loads it.
+ModeDOCK Core does **not** execute package lifecycle scripts, inject DLLs, attach to processes, bypass DRM or anti-cheat, or claim to sandbox a plugin after a game loads it.
 
 ## Status
 
-Version `0.1.0` is a functional beta for integration and controlled real-world testing. Its package, registry, profile, lockfile, and recovery formats are versioned but remain pre-1.0 APIs.
+Version `0.1.0` is a functional beta for integration and controlled real-world testing. Package, registry, profile, lockfile, and recovery formats are versioned, but remain pre-1.0 APIs.
 
 ## Quick start
 
-Requirements: Node.js 20+ and npm.
+### Requirements
+
+- Node.js 20 or newer
+- npm
+
+### Build and verify
 
 ```bash
 git clone https://github.com/SUGMANOT/ModeDOCK.git
 cd ModeDOCK
 npm install
 npm run verify
+```
+
+Run the CLI:
+
+```bash
 npm run build
 node dist/cli.js --help
 ```
 
-Create a profile:
+Install the CLI from the tarball attached to the GitHub Release:
+
+```bash
+npm install -g ./sugmanot-modedock-core-0.1.0.tgz
+moddock-core --help
+```
+
+Install the library from GitHub Packages after configuring an npm token with `read:packages`:
+
+```bash
+npm config set @sugmanot:registry https://npm.pkg.github.com
+npm config set //npm.pkg.github.com/:_authToken YOUR_GITHUB_TOKEN
+npm install @sugmanot/modedock-core
+```
+
+For local development, `npm pack` produces the same installable tarball format.
+
+### Create a profile
 
 ```bash
 moddock-core profile create coop \
@@ -60,15 +87,24 @@ moddock-core profile create coop \
   --dest config=BepInEx/config
 ```
 
-Connect a local or hosted registry and install a package:
+### Connect a registry
+
+A registry location may be a local path, a `file://` URL, or an HTTPS URL.
 
 ```bash
 moddock-core registry add coop community ./registry/registry.json
+```
+
+### Preview and install
+
+```bash
 moddock-core add coop author.better-ui@^2.0.0 --dry-run
 moddock-core add coop author.better-ui@^2.0.0
 ```
 
-Maintain the profile:
+Dependencies are resolved automatically. The exact result is written to the profile's `moddock.lock.json`.
+
+### Maintain the profile
 
 ```bash
 moddock-core list coop
@@ -78,7 +114,7 @@ moddock-core update coop
 moddock-core remove coop author.better-ui
 ```
 
-Dependencies are resolved automatically. The exact result is saved in the profile's `moddock.lock.json`. If a package replaced an existing file, removal restores the verified original.
+If a managed package replaced an existing file, removal restores the verified original.
 
 ## How it works
 
@@ -97,14 +133,23 @@ Descriptors     Exact package     Stage → verify
 and artifacts   graph + lockfile  → apply → recover
 ```
 
-A launcher creates a profile, connects registries, requests an immutable installation plan, shows `plan.operations` to the user, and applies that exact reviewed plan. On later startup it can verify files or recover an interrupted transaction.
+A typical integration follows this sequence:
+
+1. Create or open a profile describing the game, loader, platform, and destination mappings.
+2. Add one or more registries with explicit priority.
+3. Ask Core to resolve a requested package and produce an immutable installation plan.
+4. Display the operations and warnings in the product UI.
+5. Apply that exact reviewed plan.
+6. Verify managed files later or recover an interrupted transaction during startup.
 
 ## Library API
 
 ```ts
-import { ModeDockCore } from "@modedock/core";
+import { ModeDockCore } from "@sugmanot/modedock-core";
 
-const core = await ModeDockCore.open({ dataDir: "./launcher-state" });
+const core = await ModeDockCore.open({
+  dataDir: "./launcher-state"
+});
 
 await core.createProfile({
   id: "coop",
@@ -125,24 +170,28 @@ await core.addRegistry("coop", {
   location: "https://mods.example.org/registry.json"
 });
 
-const plan = await core.add("coop", "author.better-ui@^2", { dryRun: true });
+const plan = await core.add("coop", "author.better-ui@^2", {
+  dryRun: true
+});
 
+// Render plan.operations in the UI, then apply the reviewed plan.
 if ("operations" in plan) {
   await core.applyPlan(plan);
 }
 ```
 
-See [`examples/launcher.mjs`](examples/launcher.mjs) and [Launcher integration](docs/INTEGRATION.md).
+See [`examples/launcher.mjs`](examples/launcher.mjs) and the [integration guide](docs/INTEGRATION.md) for a fuller embedding example.
 
 ## Package publishing
 
-A package is a directory containing `moddock.json` and payload files:
+A package is a directory containing `moddock.json` and its payload:
 
 ```text
 my-mod/
 ├── moddock.json
 ├── BetterUI.dll
-└── config/default.cfg
+└── config/
+    └── default.cfg
 ```
 
 Build a static registry:
@@ -152,30 +201,69 @@ moddock-core pack ./my-mod --out ./registry
 moddock-core registry build ./registry --name "Example Community Registry"
 ```
 
-For public hosting, add `--base-url https://mods.example.org/` to both commands.
+Output:
+
+```text
+registry/
+├── registry.json
+└── packages/
+    └── author.better-ui/
+        └── 2.0.0/
+            ├── descriptor.json
+            └── files/
+```
+
+For public hosting, provide the base URL during packaging and registry generation:
+
+```bash
+moddock-core pack ./my-mod \
+  --out ./registry \
+  --base-url https://mods.example.org/
+
+moddock-core registry build ./registry \
+  --base-url https://mods.example.org/
+```
 
 ## Implemented capabilities
 
-- strict runtime validation for packages, registries, profiles, lockfiles, and journals;
-- SemVer ranges and backtracking dependency resolution;
-- package conflicts and game, loader, OS, and architecture constraints;
-- registry priority and descriptor/artifact integrity verification;
-- dry-run plans with stale-plan filesystem preconditions;
-- destination ownership, collision, path traversal, and symlink/junction protection;
-- per-profile locking, staged downloads, write-ahead journals, and rollback;
+- strict runtime validation for package descriptors, registries, profiles, lockfiles, and journals;
+- SemVer exact, wildcard, caret, tilde, comparator, hyphen, and OR ranges;
+- backtracking dependency resolution with package conflicts and environment constraints;
+- game, loader, operating-system, and architecture compatibility checks;
+- registry priority plus descriptor and artifact integrity verification;
+- dry-run plans with filesystem preconditions that reject stale plans;
+- case-insensitive destination ownership and collision detection;
+- target-root containment and nested symlink/junction rejection;
+- per-profile process locking;
+- staged downloads and durable temporary files;
+- write-ahead transaction journals and rollback;
 - preservation and restoration of unmanaged originals;
-- integrity verification and interrupted-operation recovery;
-- static registry publishing and JSON CLI output;
+- integrity verification and startup recovery;
+- static registry publisher tools;
+- JSON output for GUI and automation integrations;
 - CI on Windows, Linux, and macOS with Node.js 20 and 22.
 
 ## Deliberate limitations
 
-- No package scripts or lifecycle hooks.
-- Payloads are individually addressable files rather than ZIP archives.
-- Optional dependencies are not installed automatically in `0.1.0`.
+- No install scripts or lifecycle hooks.
+- Package payloads are individually addressable files rather than ZIP archives.
+- Optional dependencies are declared but are not installed automatically in `0.1.0`.
 - Registry signatures and trusted publisher identities are not implemented yet.
 - Core does not provide a GUI, accounts, ratings, moderation, discovery, or hosting.
 - Large profile switches currently copy files; overlay and hard-link backends are future work.
+
+## Repository layout
+
+```text
+src/core/          resolution, planning, transactions, verification
+src/registry/      registry loading and artifact fetching
+src/storage/       profile state, locks, paths, and atomic JSON
+src/publisher/     package and static-registry generation
+src/validation/    runtime schemas and trust-boundary validation
+src/cli/           command-line interface
+examples/          sample launcher, package, and registry
+docs/              formats, architecture, integration, and publishing
+```
 
 ## Documentation
 
@@ -189,7 +277,7 @@ For public hosting, add `--base-url https://mods.example.org/` to both commands.
 
 ## Security
 
-Packages are untrusted input. ModeDOCK validates paths, sizes, hashes, environment constraints, and state files, but a mod may execute with the user's privileges when the game loads it. Only use trusted registries and packages. Report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md).
+Packages are untrusted input. ModeDOCK validates paths, sizes, hashes, environment constraints, and state files, but a mod may execute with the user's privileges when the game loads it. Only use trusted registries and packages. Report security issues through GitHub's private vulnerability reporting flow; see [`SECURITY.md`](SECURITY.md).
 
 ## License
 

@@ -14,7 +14,7 @@
 ## Minimal service wrapper
 
 ```ts
-import { ModeDockCore } from "@modedock/core";
+import { ModeDockCore } from "@sugmanot/modedock-core";
 
 export class ModService {
   private constructor(private readonly core: ModeDockCore) {}
