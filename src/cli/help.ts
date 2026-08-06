@@ -1,12 +1,10 @@
-export const HELP = `ModeDOCK Core 0.1
+export const HELP = `ModeDOCK Core 0.2
 
-Safety-first package engine for game mod launchers and private registries.
+Transactional package engine and Challenge Capsule protocol for players, streamers, creators, and launchers.
 
 USAGE
   moddock-core profile create <id> --game <game-id> --root <path> [options]
-  moddock-core profile list
-  moddock-core profile show <id>
-  moddock-core profile delete <id>
+  moddock-core profile list | show <id> | delete <id>
 
   moddock-core registry add <profile> <name> <registry.json>
   moddock-core registry remove <profile> <name>
@@ -19,6 +17,19 @@ USAGE
   moddock-core list <profile>
   moddock-core verify <profile>
 
+CHALLENGE CAPSULES
+  moddock-core capsule init <directory> --id <id> --game <game-id> [--title <title>]
+  moddock-core capsule inspect <challenge.json> [--profile <profile>]
+  moddock-core capsule prepare <profile> <challenge.json> [--dry-run]
+  moddock-core capsule arm <session-id> [--participant <name>]
+  moddock-core capsule finish <session-id> [--claim <id=value>]... [--out <dir>] [--restore]
+  moddock-core capsule restore <session-id> [--dry-run]
+  moddock-core capsule status [session-id]
+
+  A Challenge Capsule prepares and verifies an environment, issues a session ticket,
+  and captures a tamper-evident result bundle. It never starts the game itself.
+
+OTHER COMMANDS
   moddock-core pack <mod-directory> --out <registry-root>
   moddock-core transactions
   moddock-core recover <transaction-id>
@@ -35,10 +46,4 @@ PROFILE OPTIONS
   --loader <loader-id>
   --loader-version <version>
   --dest <id=relative/path>   Repeatable; replaces default destination map
-
-PACKAGE FORMAT
-  Put a moddock.json manifest and its payload files in one directory, then run:
-
-    moddock-core pack ./my-mod --out ./registry
-    moddock-core registry build ./registry
 `;
