@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0 - 2026-08-06
+
+- Added the versioned Challenge Capsule manifest format.
+- Added capsule compatibility inspection for game, loader, platform, and architecture.
+- Added overlay and exact challenge environment modes.
+- Added transactional challenge preparation with previous-profile restoration.
+- Added session tickets containing objective, rules, nonce, environment fingerprint, baseline hash, and integrity.
+- Added safe evidence snapshots for declared files and directories.
+- Added optional bounded evidence copying into result bundles.
+- Added typed claims for scores, times, completion flags, seeds, and other participant-supplied data.
+- Added result verdicts, environment stability checks, evidence deltas, and canonical result integrity.
+- Added Challenge Capsule CLI commands: init, inspect, prepare, arm, finish, restore, and status.
+- Added the public `core.challenges` TypeScript API.
+- Added an Example Challenge Capsule, JSON Schema, integration guide, Russian quick start, and expanded security documentation.
+- Clarified that ModeDOCK never launches the game or executes capsule handoff data.
+- Expanded the test suite from 12 to 15 tests.
+
 ## 0.1.0 - 2026-08-06
 
 - Added versioned declarative package and static registry formats.
