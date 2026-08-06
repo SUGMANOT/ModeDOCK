@@ -3,6 +3,8 @@ name: Release and publish
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +17,9 @@ concurrency:
 
 jobs:
   release:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/publish-v0.1.0')
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -22,6 +27,7 @@ jobs:
       - name: Check out release commit
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Set up Node.js
