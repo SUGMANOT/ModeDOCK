@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/modedock-logo.png" alt="ModeDOCK logo" width="100%" />
+
 # ModeDOCK Core
 
 **A transactional package engine for game mod launchers, community registries, and server panels.**
