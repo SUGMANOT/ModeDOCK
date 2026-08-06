@@ -1,0 +1,7 @@
+src/
+test/
+examples/
+.github/
+dist-test/
+tsconfig*.json
+scripts-build.mjs

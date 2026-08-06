@@ -1,13 +1,41 @@
 # Security policy
 
-## Supported version
+## Supported versions
 
-ModeDOCK `1.0.0b` is the current public beta. Security fixes are applied to the latest beta only.
+Security fixes are applied to the latest `0.x` release until a stable support policy is published.
 
-## Reporting a vulnerability
+## Reporting
 
-Use the repository's private **Security -> Report a vulnerability** flow. Do not disclose a working exploit, private game files, credentials, personal paths, or sensitive logs in a public issue.
+Use GitHub private vulnerability reporting. Include:
 
-Include the ModeDOCK version, operating system, affected command, machine-readable error code, minimal reproduction, and expected impact. Reports involving path traversal, unsafe overwrite/removal, archive extraction, command execution, signature or hash verification, privilege boundaries, or untrusted plugin execution are security-relevant.
+- ModeDOCK Core version;
+- operating system and Node.js version;
+- affected command or API call;
+- a minimal package/registry fixture;
+- expected and actual filesystem effects;
+- whether target-root escape, unsafe overwrite/removal, integrity bypass, or arbitrary code execution is possible.
 
-ModeDOCK does not claim to sandbox third-party mods. A mod or plugin may execute with the user's privileges when launched by its game or compatible runtime. Only install content you trust.
+Do not publish a working filesystem escape or destructive proof of concept before a fix is available.
+
+## Security boundary
+
+ModeDOCK Core protects its own package deployment workflow. It does not sandbox or audit game plugins. A DLL or other executable artifact can run with the game's user privileges after the game loads it.
+
+The core provides:
+
+- strict runtime validation;
+- path traversal and nested-link checks;
+- artifact and descriptor hashing;
+- ownership tracking;
+- stale-plan rejection;
+- original-file backups;
+- write-ahead journals and rollback;
+- no package lifecycle scripts.
+
+It does not currently provide:
+
+- publisher signatures;
+- malware scanning;
+- trust scoring;
+- operating-system sandboxing;
+- protection after a game or mod starts executing.

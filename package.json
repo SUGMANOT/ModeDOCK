@@ -1,82 +1,57 @@
 {
-  "name": "moddock",
-  "version": "1.0.0-beta.0",
-  "displayVersion": "1.0.0-beta.0",
-  "description": "Safety-first CLI and terminal UI for transactional local game mod management",
+  "name": "@modedock/core",
+  "version": "0.1.0",
+  "description": "Safety-first package and profile engine for game mod launchers, private registries, and server panels",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "moddock": "dist/moddock.js"
+    "moddock-core": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./publisher": {
+      "types": "./dist/publisher/index.d.ts",
+      "import": "./dist/publisher/index.js"
+    }
   },
   "files": [
-    "dist/moddock.js",
+    "dist",
     "README.md",
-    "COMMANDS.md",
-    "CHANGELOG.md",
-    "SECURITY.md",
-    "native/include/modedock_plugin.h",
-    "native/bin/moddock-native-probe.exe",
-    "managed/bin/managed-inspector/**",
-    "managed/bin/runtime/**",
-    "docs/README.md",
-    "docs/INSTALLATION.md",
-    "docs/DEVELOPMENT.md",
-    "docs/NATIVE_ABI.md",
-    "docs/RUNTIME_ARCHITECTURE.md",
-    "docs/BEPINEX_COMPATIBILITY.md",
-    "docs/HARMONY_COMPATIBILITY.md",
-    "docs/GAME_ADAPTERS.md",
-    "docs/ARCHITECTURE.md",
-    "docs/ADAPTERS.md",
-    "docs/PUBLISHING.md",
-    "docs/RELEASE_1.0.0-beta.0.md"
+    "LICENSE",
+    "docs"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "build:native": "node scripts/build-native.mjs",
-    "build:managed": "node scripts/build-managed.mjs",
-    "build:all": "npm run build:native && npm run build:managed && npm run build",
-    "dev": "npm run build && node dist/moddock.js",
-    "typecheck": "tsc --noEmit",
-    "test": "node scripts/test.mjs",
-    "test:tui": "node scripts/test-interactive.mjs",
-    "test:install": "node scripts/test-global-install.mjs",
-    "verify:release": "npm run build:all && npm run verify && npm run test:install",
-    "verify": "npm run typecheck && npm test && npm run build && npm run test:tui",
+    "clean": "node -e \"const fs=require('node:fs');for(const p of ['dist','dist-test'])fs.rmSync(p,{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit && tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test dist-test/test/*.test.js",
+    "test:coverage": "npm run build && node --experimental-test-coverage --test dist-test/test/*.test.js",
+    "verify": "npm run typecheck && npm test",
     "prepack": "npm run verify"
   },
+  "keywords": [
+    "mods",
+    "mod-manager",
+    "package-manager",
+    "game-launcher",
+    "modpack",
+    "transaction",
+    "rollback"
+  ],
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SUGMANOT/ModeDOCK.git"
   },
-  "homepage": "https://github.com/SUGMANOT/ModeDOCK#readme",
-  "bugs": {
-    "url": "https://github.com/SUGMANOT/ModeDOCK/issues"
-  },
-  "author": "SugmaNot",
-  "keywords": [
-    "mods",
-    "plugins",
-    "mod-manager",
-    "game-mods",
-    "cli",
-    "terminal-ui",
-    "backup",
-    "integrity",
-    "bepinex",
-    "harmony"
-  ],
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "tag": "beta"
-  },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "esbuild": "^0.25.0",
-    "fflate": "^0.8.2",
-    "typescript": "^5.9.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
   }
 }

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "manifest": {
+    "schemaVersion": 1,
+    "id": "example.hello-mod",
+    "version": "1.0.0",
+    "name": "Hello ModeDOCK",
+    "game": {
+      "id": "example-game",
+      "version": "^1.0.0"
+    },
+    "files": [
+      {
+        "source": "files/hello.txt",
+        "destination": "mods",
+        "target": "HelloModeDOCK/hello.txt"
+      }
+    ],
+    "description": "A harmless text-file example package.",
+    "authors": [
+      "ModeDOCK"
+    ],
+    "license": "MIT"
+  },
+  "artifacts": [
+    {
+      "source": "files/hello.txt",
+      "size": 26,
+      "sha256": "089c29496258315bc74849f477da10f4ae14cb81478e094b52ed15279d50c68f",
+      "url": "files/files/hello.txt"
+    }
+  ],
+  "integrity": "1574615c562fdb6e9fbc2a6d87ecbb3fd13b87db38b5b58c82d257c006362219"
+}

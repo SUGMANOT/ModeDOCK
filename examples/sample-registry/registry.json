@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "ModeDOCK Example Registry",
+  "packages": {
+    "example.hello-mod": {
+      "1.0.0": {
+        "descriptor": "./packages/example.hello-mod/1.0.0/descriptor.json",
+        "integrity": "3c190dcff13f5f2ca612988c7bb82ad21025771436d90d0e21e95275c300c248"
+      }
+    }
+  }
+}

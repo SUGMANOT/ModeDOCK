@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "example.hello-mod",
+  "version": "1.0.0",
+  "name": "Hello ModeDOCK",
+  "description": "A harmless text-file example package.",
+  "authors": ["ModeDOCK"],
+  "license": "MIT",
+  "game": {
+    "id": "example-game",
+    "version": "^1.0.0"
+  },
+  "files": [
+    {
+      "source": "files/hello.txt",
+      "destination": "mods",
+      "target": "HelloModeDOCK/hello.txt"
+    }
+  ]
+}
